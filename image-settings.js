@@ -73,5 +73,14 @@
     }catch(error){throw new Error(error.message||'图片无法读取，请换一张图片。');}
     finally{URL.revokeObjectURL(url);}
   }
-  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage};
+  function extractContours(img){
+    const canvas=document.createElement('canvas');canvas.width=768;canvas.height=512;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    ctx.fillStyle='#08060d';ctx.fillRect(0,0,768,512);
+    const nw=img.naturalWidth||img.width||768,nh=img.naturalHeight||img.height||512;
+    const scale=Math.max(768/nw,512/nh),w=nw*scale,h=nh*scale;
+    ctx.drawImage(img,(768-w)/2,(512-h)/2,w,h);
+    return vectorize(ctx.getImageData(0,0,768,512).data,768,512);
+  }
+  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage,extractContours,vectorize};
 })(typeof window==='undefined'?{}:window);

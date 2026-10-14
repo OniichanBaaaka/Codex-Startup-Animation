@@ -2,8 +2,8 @@
 /* Keep the completed screen out of keyboard navigation during playback. */
 .end-screen{visibility:hidden}.finished .end-screen{visibility:visible}.scanlines{opacity:.022}
 /* Boot sequence: one shared clock drives every stage, including stroke drawing. */
-.scene{background:#08060d}.artwork{opacity:0;object-position:50% 50%;transform-origin:50% 50%}
-.line-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.scene{background:#08060d}.artwork{opacity:0;object-position:50% 50%;transform-origin:50% 50%;transform:translateZ(0);backface-visibility:hidden}
+.line-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;transform:translateZ(0);backface-visibility:hidden;will-change:opacity}
 .transition-flash{position:absolute;inset:0;background:#fff8fc;opacity:0;pointer-events:none}
 .intro{background:none;color:#d980a7;opacity:1}
 .pulse{position:absolute;left:50%;top:50%;width:110px;height:110px;transform:translate(-50%,-50%)}
@@ -29,7 +29,7 @@
 body.launch-mode #image-settings{display:none}
 #settings-dialog{color:#eddfE9;background:#18131b;border:1px solid #665060;border-radius:14px;width:min(590px,90vw);max-height:90vh;padding:30px;box-shadow:0 30px 100px #0009;overflow:auto}
 #settings-dialog::backdrop{background:#050309cc;backdrop-filter:blur(12px)}
-#settings-dialog .eyebrow{margin:0 0 12px}#settings-title{margin:0;font-size:24px;letter-spacing:1px;font-weight:500}.settings-description{font-size:12px;color:#9c8796;margin:12px 0 24px}
+#settings-dialog .eyebrow{margin:0 0 12px}#settings-title{margin:0;font-size:24px;letter-spacing:1px;font-weight:500}.settings-description{font-size:12px;color:#9c8796;margin:12px 0 24px}.settings-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-right:32px}.settings-top-row .eyebrow{margin:0}.lang-switch{display:inline-flex;gap:4px;background:#241b26;padding:3px;border-radius:8px;border:1px solid #63465c66}.lang-btn{border:0;background:transparent;color:#bca2b4;font-size:11px;font-weight:500;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .18s ease;font-family:inherit}.lang-btn:hover{color:#fff;background:#352737}.lang-btn.active{background:#d7a4c0;color:#201421;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.35)}
 .settings-close{position:absolute;right:16px;top:12px;font-size:26px;border:0;background:none;color:#a18a99}
 .image-choices{display:grid;grid-template-columns:1fr 1fr;gap:16px}.image-choice{position:relative;display:flex;align-items:flex-start;flex-direction:column;padding:12px;background:#241b26;border:1px solid #63465c66;border-radius:8px;cursor:pointer;overflow:hidden}.image-choice>img{width:100%;height:130px;object-fit:cover;border-radius:4px;margin-bottom:14px}#avatar-preview{object-fit:contain;background:#100b13}.image-choice>span{font-size:13px}.image-choice>small{font-size:10px;color:#a18a99;margin:7px 0 16px}.image-choice .choose-label{font-size:11px;color:#edb4d0}.image-choice input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}.image-choice:focus-within{outline:2px solid #d8a4bf;outline-offset:2px}
 #settings-status{font-size:11px;color:#b397a8;line-height:1.7;min-height:38px;margin:20px 0 16px}.settings-actions{display:flex;justify-content:space-between;gap:15px}.settings-actions button{padding:10px 14px;font-size:11px;border-radius:5px;border:1px solid #9b708b55;background:none}.settings-actions #preview-images{background:#d7a4c0;color:#251b24;border:0}.settings-actions button:disabled{opacity:.4;cursor:wait}
