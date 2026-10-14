@@ -1,6 +1,166 @@
 (() => {
   'use strict';
   const $ = selector => document.querySelector(selector);
+  const I18N = {
+    vi: {
+      settingsEyebrow: 'GIAO DIỆN KHỞI ĐỘNG',
+      settingsTitle: 'Tùy chỉnh giao diện theo ý bạn',
+      settingsDescription: 'Tùy chỉnh 2 hình ảnh và văn bản bên dưới, để trống để ẩn chữ.',
+      avatarTitle: 'Ảnh đại diện (Nửa đầu)',
+      avatarTip: 'Ảnh vuông cho hiệu quả tốt nhất',
+      avatarChange: 'Đổi ảnh đại diện',
+      bgTitle: 'Hình nền (Nửa sau)',
+      bgTip: 'Nên dùng ảnh ngang 3:2 · Tự tạo nét vẽ vector',
+      bgChange: 'Đổi hình nền',
+      introTitleLabel: 'Nửa đầu · Tiêu đề dưới ảnh đại diện',
+      introTitleLimit: 'Tối đa 16 ký tự',
+      introCaptionLabel: 'Nửa đầu · Dòng phụ dưới tiêu đề',
+      introCaptionLimit: 'Tối đa 48 ký tự',
+      artworkSubtitleLabel: 'Nửa sau · Phụ đề dưới hình nền',
+      artworkSubtitleLimit: 'Tối đa 60 ký tự',
+      wallpaperStrengthLabel: 'Độ hiển thị hình nền Codex',
+      wallpaperStrengthTip: 'Sau khi khởi động xong, hình nền tiếp tục phủ cửa sổ. 0% là tắt hình nền.',
+      statusDefault: 'Hình ảnh và chữ lưu trên máy. Bấm "Lưu & Xem trước" để áp dụng; đóng để hủy thay đổi.',
+      statusPreparingAvatar: 'Đang chuẩn bị ảnh đại diện...',
+      statusGeneratingContours: 'Đang tự động vẽ đường nét vector cho hình nền mới...',
+      statusImageReady: 'Hình ảnh đã sẵn sàng, bấm "Lưu & Xem trước" để áp dụng.',
+      statusSaving: 'Đang lưu...',
+      statusSaveFailed: 'Lưu thất bại, đã giữ nguyên cài đặt cũ: ',
+      statusResetDone: 'Đã khôi phục mặc định ảnh, chữ và độ mờ. Bấm "Lưu & Xem trước" để áp dụng.',
+      btnReset: 'Khôi phục mặc định',
+      btnSavePreview: 'Lưu & Xem trước',
+      btnRestoreAppearance: 'Tắt giao diện, khôi phục gốc Codex',
+      closeAria: 'Đóng cài đặt',
+      btnSettings: 'Cài đặt giao diện',
+      btnSkip: 'NHẤN / ESC ĐỂ BỎ QUA',
+      skipTitle: 'Bỏ qua hoạt ảnh (Esc)',
+      assetError: 'Tải tài nguyên hoạt ảnh thất bại, vui lòng kiểm tra thư mục assets.',
+      endEyebrow: 'KẾT NỐI ĐÃ THIẾT LẬP',
+      endTitle: 'Linh hồn, đã ở bên cạnh bạn.',
+      endDesc: 'Hoạt ảnh mở màn 12 giây đã kết thúc',
+      descLaunchingCodex: 'Đang hiển thị Codex…',
+      descSkipped: 'Đã bỏ qua hoạt ảnh',
+      btnEnded: 'Đã kết thúc',
+      btnReplayEnd: 'Xem lại lần nữa',
+      btnReplay: 'Xem lại',
+      btnPause: 'Tạm dừng',
+      btnPlay: 'Tiếp tục',
+      nativeLaunch: 'Khởi chạy Codex ↗',
+      previewNote: '12 giây · Có thể bỏ qua bất kỳ lúc nào',
+      previewNoteProgress: 'Phần trăm là tiến trình hoạt ảnh',
+      defaultIntroTitle: 'Phi Hành Tuyết Nhung',
+      defaultIntroCaption: 'CODEX INITIALIZE / TYPE-0',
+      defaultArtworkSubtitle: 'Linh hồn đã đến... bên cạnh bạn~'
+    },
+    en: {
+      settingsEyebrow: 'YOUR STARTUP',
+      settingsTitle: 'Customize Your Startup Screen',
+      settingsDescription: 'Customize the two images and text below. Leave blank to hide text.',
+      avatarTitle: 'Avatar (First Half)',
+      avatarTip: 'Square images work best',
+      avatarChange: 'Change Avatar',
+      bgTitle: 'Background (Second Half)',
+      bgTip: '3:2 landscape recommended · Auto line art',
+      bgChange: 'Change Background',
+      introTitleLabel: 'First Half · Title below Avatar',
+      introTitleLimit: 'Max 16 characters',
+      introCaptionLabel: 'First Half · Caption below Title',
+      introCaptionLimit: 'Max 48 characters',
+      artworkSubtitleLabel: 'Second Half · Subtitle below Background',
+      artworkSubtitleLimit: 'Max 60 characters',
+      wallpaperStrengthLabel: 'Codex Background Opacity',
+      wallpaperStrengthTip: 'Background remains after startup. 0% disables background.',
+      statusDefault: 'Saved locally. Click "Save & Preview" to apply; close to discard.',
+      statusPreparingAvatar: 'Preparing avatar image...',
+      statusGeneratingContours: 'Generating vector contour lines for new background...',
+      statusImageReady: 'Images ready, click "Save & Preview" to apply.',
+      statusSaving: 'Saving...',
+      statusSaveFailed: 'Save failed, previous settings retained: ',
+      statusResetDone: 'Reset to default images, texts, and opacity. Click "Save & Preview" to apply.',
+      btnReset: 'Restore Defaults',
+      btnSavePreview: 'Save & Preview',
+      btnRestoreAppearance: 'Disable Theme, Restore Codex Default',
+      closeAria: 'Close Settings',
+      btnSettings: 'Settings',
+      btnSkip: 'CLICK / ESC TO SKIP',
+      skipTitle: 'Skip Animation (Esc)',
+      assetError: 'Failed to load assets. Please ensure assets folder is complete.',
+      endEyebrow: 'CONNECTION ESTABLISHED',
+      endTitle: 'A wandering spirit... by your side.',
+      endDesc: '12-second startup preview completed',
+      descLaunchingCodex: 'Opening Codex…',
+      descSkipped: 'Animation skipped',
+      btnEnded: 'Ended',
+      btnReplayEnd: 'Replay once more',
+      btnReplay: 'Replay',
+      btnPause: 'Pause',
+      btnPlay: 'Play',
+      nativeLaunch: 'Launch Codex ↗',
+      previewNote: '12 seconds · Skip anytime with Esc',
+      previewNoteProgress: 'Percentage indicates animation progress',
+      defaultIntroTitle: 'Flying Fluff',
+      defaultIntroCaption: 'CODEX INITIALIZE / TYPE-0',
+      defaultArtworkSubtitle: 'A wandering spirit... by your side~'
+    },
+    zh: {
+      settingsEyebrow: 'YOUR STARTUP',
+      settingsTitle: '换成你喜欢的画面',
+      settingsDescription: '自定义两张图片和下方文字，留空可隐藏对应文字。',
+      avatarTitle: '前半段头像',
+      avatarTip: '方形图片效果最好',
+      avatarChange: '更换头像',
+      bgTitle: '后半段背景',
+      bgTip: '推荐 3:2 横图 · 自动生成线稿',
+      bgChange: '更换背景',
+      introTitleLabel: '前半段 · 头像下方标题',
+      introTitleLimit: '最多 16 字',
+      introCaptionLabel: '前半段 · 标题下方小字',
+      introCaptionLimit: '最多 48 字',
+      artworkSubtitleLabel: '后半段 · 背景下方字幕',
+      artworkSubtitleLimit: '最多 60 字',
+      wallpaperStrengthLabel: 'Codex 背景显现程度',
+      wallpaperStrengthTip: '启动结束后，背景继续铺满窗口。0% 为不显示背景。',
+      statusDefault: '图片与文字保存在本机。修改后点击「保存并预览」；关闭则放弃本次修改。',
+      statusPreparingAvatar: '正在准备头像…',
+      statusGeneratingContours: '正在为新背景生成线稿…',
+      statusImageReady: '图片已准备好，点击「保存并预览」应用。',
+      statusSaving: '正在保存…',
+      statusSaveFailed: '保存失败，原设置已保留：',
+      statusResetDone: '已选用默认图片、文字和背景显现程度，点击「保存并预览」应用。',
+      btnReset: '恢复默认图片与文字',
+      btnSavePreview: '保存并预览',
+      btnRestoreAppearance: '关闭美化，恢复 Codex 外观',
+      closeAria: '关闭图片设置',
+      btnSettings: '图片设置',
+      btnSkip: 'CLICK / ESC TO SKIP',
+      skipTitle: '跳过动画（Esc）',
+      assetError: '动画素材加载失败，请确认 assets 文件夹完整。',
+      endEyebrow: 'CONNECTION ESTABLISHED',
+      endTitle: '幽灵，已在你身边。',
+      endDesc: '12 秒开场预览结束',
+      descLaunchingCodex: '正在显示 Codex…',
+      descSkipped: '已跳过开场动画',
+      btnEnded: '已结束',
+      btnReplayEnd: '再看一次',
+      btnReplay: '重播',
+      btnPause: '暂停',
+      btnPlay: '继续',
+      nativeLaunch: '播放并打开 Codex ↗',
+      previewNote: '12 秒 · 可随时跳过',
+      previewNoteProgress: '画面百分比为动画进度',
+      defaultIntroTitle: '飞行雪绒',
+      defaultIntroCaption: 'CODEX INITIALIZE / TYPE-0',
+      defaultArtworkSubtitle: '幽灵来到…你身边～'
+    }
+  };
+  let currentLang = (function(){
+    try {
+      const s = localStorage.getItem('aemeath-lang');
+      if (s && I18N[s]) return s;
+    } catch {}
+    return 'vi';
+  })();
+  const t = key => (I18N[currentLang]?.[key] !== undefined ? I18N[currentLang][key] : (I18N['vi'][key] || ''));
   const duration = 12000;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const native = !window.AEMEATH_EXTERNAL && Boolean(window.webkit?.messageHandlers?.launcher);
@@ -36,9 +196,31 @@
     }
     return 1;
   }
+  // Cached DOM elements for render loop to avoid per-frame queries
+  const elTransitionFlash = $('.transition-flash');
+  const elShutterLine = $('.shutter-line');
+  const elIdentity = $('.identity');
+  const elAvatarFrame = $('.avatar-frame');
+  const elPulse = $('.pulse');
+  const elPulseRings = Array.from(document.querySelectorAll('.pulse i'));
+  const elDashed = $('.dashed');
+  const elBootTitle = $('.boot-title');
+  const elBootCaption = $('.boot-caption');
+  const elWave = $('.wave');
+  const elBootGrid = $('.boot-grid');
+  const elBootCorners = $('.boot-corners');
+  const elBootLogs = $('.boot-logs');
+  const elBootLogLines = Array.from(document.querySelectorAll('.boot-logs div'));
+  const elShade = $('.shade');
+  const elSyncFill = $('.sync-fill');
+  const elRatio = $('#ratio');
+  const elSyncPhase = $('.sync-phase');
+  const elTimecode = $('#timecode');
+  const elElapsed = $('#elapsed');
+
   // Split the selected image's own contours once; no particles are allocated per frame.
   const canvas = $('.line-art'), ctx = canvas.getContext('2d');
-  function preparePaths(raw) { return raw.map(points => {
+  function preparePaths(raw) { if(!Array.isArray(raw))raw=[]; return raw.map(points => {
     let total=0;
     for(let i=1;i<points.length;i++)total+=Math.hypot(points[i][0]-points[i-1][0],points[i][1]-points[i-1][1]);
     const full=new Path2D();points.forEach((point,i)=>i?full.lineTo(...point):full.moveTo(...point));
@@ -52,6 +234,7 @@
       const first=points[0],last=points[points.length-1],x=(first[0]+last[0])/2,y=(first[1]+last[1])/2;
       const seed=result.length+1;
       result.push({x,y,points:points.map(point=>[point[0]-x,point[1]-y]),
+        rawPoints: points,
         sx:(x+(noise(seed)-.5)*440+1536)%1536,sy:(y+(noise(seed+271)-.5)*300+1024)%1024,
         angle:(noise(seed+563)-.5)*Math.PI*2,seed:noise(seed+811)*Math.PI*2});
     }
@@ -136,7 +319,8 @@
     const fade=1-smooth((spread-.03)/.43),size=1-.9*spread;
     if(fade<=0)return;
     ctx.globalAlpha=fade;ctx.imageSmoothingEnabled=false;
-    for(const tile of identityPieces){
+    for(let i=0;i<identityPieces.length;i++){
+      const tile=identityPieces[i];
       const target=tile.target;
       const x=(tile.x+tile.w/2)*(1-spread)+target.sx*spread,y=(tile.y+tile.h/2)*(1-spread)+target.sy*spread;
       const angle=target.angle*spread,cs=Math.cos(angle)*size,sn=Math.sin(angle)*size;
@@ -152,30 +336,43 @@
     ctx.clearRect(0,0,1536,1024);
     ctx.strokeStyle='#c8c0cd';ctx.lineWidth=1.25;ctx.lineCap='round';ctx.lineJoin='round';
     if(p===1){
-      ctx.globalAlpha=1;paths.forEach(path=>ctx.stroke(path.full));
+      ctx.globalAlpha=1;
+      for(let i=0;i<paths.length;i++) ctx.stroke(paths[i].full);
     }else{
       drawIdentityPieces(spread);
       if(spread>.04){
-      ctx.globalAlpha=.82*smooth((spread-.04)/.36);ctx.beginPath();
-      // Arrival time follows target X, so the left edge resolves before the face and right edge.
-      const front=p*1.5-.25;
-      for(const fragment of fragments){
-        const arrival=smooth((front-fragment.x/1536+.16)/.32),loose=1-arrival;
-        const angle=fragment.angle*loose,cs=Math.cos(angle),sn=Math.sin(angle);
-        const sx=(fragment.ix??fragment.sx)*(1-spread)+fragment.sx*spread;
-        const sy=(fragment.iy??fragment.sy)*(1-spread)+fragment.sy*spread;
-        const x=sx*loose+fragment.x*arrival+Math.sin(drift*.8+fragment.seed)*7*loose*spread;
-        const y=sy*loose+fragment.y*arrival+Math.cos(drift*.6+fragment.seed)*7*loose*spread;
-        const size=.16+.84*arrival;
-        fragment.points.forEach((point,i)=>{
-          const px=x+(point[0]*cs-point[1]*sn)*size,py=y+(point[0]*sn+point[1]*cs)*size;
-          if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);
-        });
-      }
-      ctx.stroke();ctx.globalAlpha=1;
+        ctx.globalAlpha=.82*smooth((spread-.04)/.36);ctx.beginPath();
+        const front=p*1.5-.25;
+        const driftX = drift * .8, driftY = drift * .6;
+        for(let f=0;f<fragments.length;f++){
+          const fragment=fragments[f];
+          const rawRatio=(front-fragment.x/1536+.16)/.32;
+          if(rawRatio>=1){
+            // Settled fragment: draw directly from raw points without trigonometry
+            const pts=fragment.rawPoints||fragment.points;
+            for(let i=0;i<pts.length;i++){
+              if(i)ctx.lineTo(pts[i][0],pts[i][1]);else ctx.moveTo(pts[i][0],pts[i][1]);
+            }
+          }else{
+            const arrival=rawRatio<=0?0:smooth(rawRatio);
+            const loose=1-arrival;
+            const angle=fragment.angle*loose,cs=Math.cos(angle),sn=Math.sin(angle);
+            const sx=(fragment.ix??fragment.sx)*(1-spread)+fragment.sx*spread;
+            const sy=(fragment.iy??fragment.sy)*(1-spread)+fragment.sy*spread;
+            const x=sx*loose+fragment.x*arrival+Math.sin(driftX+fragment.seed)*7*loose*spread;
+            const y=sy*loose+fragment.y*arrival+Math.cos(driftY+fragment.seed)*7*loose*spread;
+            const size=.16+.84*arrival;
+            const pts=fragment.points;
+            for(let i=0;i<pts.length;i++){
+              const pt=pts[i];
+              const px=x+(pt[0]*cs-pt[1]*sn)*size,py=y+(pt[0]*sn+pt[1]*cs)*size;
+              if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);
+            }
+          }
+        }
+        ctx.stroke();ctx.globalAlpha=1;
       }
     }
-    canvas.dataset.progress=p.toFixed(3);canvas.dataset.fragments=String(fragments.length);
   }
   for(let i=0;i<60;i++){
     const tick=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -184,79 +381,123 @@
     tick.setAttribute('x2',200+Math.sin(angle)*(i%5===0?199:192));tick.setAttribute('y2',200-Math.cos(angle)*(i%5===0?199:192));
     tick.style.opacity=i%5===0?'.9':'.55';$('.ticks').appendChild(tick);
   }
+  let lastStage='';
   function render(t) {
-    const s=t/1000, p=progress(t), color=smooth((s-7.18)/.24), collapse=smooth((s-11)/.3), pinch=smooth((s-11.65)/.35);
+    const s=t/1000, p=progress(t);
+    const color=smooth((s-7.18)/.24);
+    const collapse=smooth((s-11)/.3);
+    const pinch=smooth((s-11.65)/.35);
     const dissolve=smooth((s-4.18)/.56);
     const closing=s>=11;
-    root.classList.toggle('closing',closing);document.body.classList.toggle('closing',closing);
-    scene.style.opacity=collapse>=1?'0':'1';
-    scene.style.transform=`scaleY(${Math.max(.001,1-collapse)})`;
-    scene.style.filter=closing?`brightness(${1+collapse*3})`:'none';
-    $('.transition-flash').style.opacity=String(reduced?0:smooth((s-7.18)/.035)*(1-smooth((s-7.22)/.2))*.8);
-    const line=$('.shutter-line');
-    line.style.opacity=String(smooth((s-11.15)/.15)*(1-smooth((s-11.96)/.04)));
-    line.style.transform=`scaleX(${1-pinch})`;
+
+    root.classList.toggle('closing',closing);
+    document.body.classList.toggle('closing',closing);
+
+    if (collapse > 0) {
+      scene.style.opacity=collapse>=1?'0':'1';
+      scene.style.transform=`scaleY(${Math.max(.001,1-collapse)})`;
+      scene.style.filter=closing?`brightness(${1+collapse*3})`:'none';
+    } else if (scene.style.opacity !== '1') {
+      scene.style.opacity='1';
+      scene.style.transform='none';
+      scene.style.filter='none';
+    }
+
+    if (s >= 7.0 && s <= 7.5) {
+      elTransitionFlash.style.opacity=String(reduced?0:smooth((s-7.18)/.035)*(1-smooth((s-7.22)/.2))*.8);
+    } else if (elTransitionFlash.style.opacity !== '0') {
+      elTransitionFlash.style.opacity='0';
+    }
+
+    if (s >= 11.0) {
+      elShutterLine.style.opacity=String(smooth((s-11.15)/.15)*(1-smooth((s-11.96)/.04)));
+      elShutterLine.style.transform=`scaleX(${1-pinch})`;
+    } else if (elShutterLine.style.opacity !== '0') {
+      elShutterLine.style.opacity='0';
+    }
+
     if(closing&&!revealed){revealed=true;send('reveal');}
 
-    intro.style.opacity=String(reduced?1-smooth((s-4.18)/.56):s<4.18?1:0);
-    $('.identity').style.opacity=String(smooth((s-1.05)/.65));
-    $('.identity').style.transform=`translate(-50%,-43%) scale(${.94+.06*smooth((s-1.05)/.65)})`;
-    const beat=reduced?0:Math.pow((1-Math.cos(Math.max(0,s-1.05)*Math.PI*2/1.08))/2,2);
-    $('.avatar-frame').style.transform=`translateY(${-4*beat}px) scale(${1+.025*beat})`;
-    $('.pulse').style.opacity=String(1-smooth((s-1.15)/.5));
-    document.querySelectorAll('.pulse i').forEach((ring,i)=>{
-      const phase=(s*.75+i*.5)%1;
-      ring.style.transform=`scale(${.25+phase*.9})`;ring.style.opacity=String((1-phase)*.8);
-    });
-    $('.dashed').style.transformOrigin='200px 200px';$('.dashed').style.transform=`rotate(${reduced?0:s*16}deg)`;
-    $('.boot-title').style.clipPath=`inset(0 ${(1-clamp((s-1.9)/.7))*100}% 0 0)`;
-    $('.boot-caption').style.opacity=String(smooth((s-2.5)/.35)*.5);
-    $('.wave').style.transform=`scaleY(${reduced?1:.6+Math.sin(s*6)*.4})`;
-    $('.boot-grid').style.opacity=String(smooth((s-.8)/.6)*(1-color));
-    $('.boot-corners').style.opacity=String(smooth((s-.8)/.6)*(1-color));
-    $('.boot-logs').style.opacity=String((1-color)*.55);
-    document.querySelectorAll('.boot-logs div').forEach((line,i)=>line.style.opacity=String(smooth((s-.15-i*.38)/.3)));
+    if (s < 4.8) {
+      intro.style.opacity=String(reduced?1-smooth((s-4.18)/.56):s<4.18?1:0);
+      elIdentity.style.opacity=String(smooth((s-1.05)/.65));
+      elIdentity.style.transform=`translate(-50%,-43%) scale(${.94+.06*smooth((s-1.05)/.65)})`;
+      const beat=reduced?0:Math.pow((1-Math.cos(Math.max(0,s-1.05)*Math.PI*2/1.08))/2,2);
+      elAvatarFrame.style.transform=`translateY(${-4*beat}px) scale(${1+.025*beat})`;
+      if (s < 1.7) {
+        elPulse.style.opacity=String(1-smooth((s-1.15)/.5));
+        for(let i=0;i<elPulseRings.length;i++){
+          const ring=elPulseRings[i];
+          const phase=(s*.75+i*.5)%1;
+          ring.style.transform=`scale(${.25+phase*.9})`;ring.style.opacity=String((1-phase)*.8);
+        }
+      }
+      elDashed.style.transformOrigin='200px 200px';elDashed.style.transform=`rotate(${reduced?0:s*16}deg)`;
+      elBootTitle.style.clipPath=`inset(0 ${(1-clamp((s-1.9)/.7))*100}% 0 0)`;
+      elBootCaption.style.opacity=String(smooth((s-2.5)/.35)*.5);
+      elWave.style.transform=`scaleY(${reduced?1:.6+Math.sin(s*6)*.4})`;
+      elBootGrid.style.opacity=String(smooth((s-.8)/.6)*(1-color));
+      elBootCorners.style.opacity=String(smooth((s-.8)/.6)*(1-color));
+      elBootLogs.style.opacity=String((1-color)*.55);
+      if (s < 2.5) {
+        for(let i=0;i<elBootLogLines.length;i++) elBootLogLines[i].style.opacity=String(smooth((s-.15-i*.38)/.3));
+      }
+    } else if (intro.style.opacity !== '0') {
+      intro.style.opacity='0';
+    }
+
     const assembling=clamp((s-5.08)/2.02);
     if(s>=4.18&&s<7.43)trace(reduced?1:assembling,s-4.18,reduced?1:dissolve);
     if(s>=4.74&&identityTexture)releaseIdentityTexture();
     canvas.style.opacity=String((reduced?smooth((s-4.18)/.56):s>=4.18?1:0)*(1-color));
-    canvas.dataset.dissolve=dissolve.toFixed(3);
     art.style.opacity=String(color);
-    // The art stays registered to the contours until the color transition finishes.
     art.style.transform=reduced?'none':`scale(${1+.012*smooth((s-7.42)/3.58)})`;
-    $('.shade').style.opacity=String(color);
+    elShade.style.opacity=String(color);
     hud.style.opacity=String(smooth((s-7.24)/.45));
-    $('.sync-fill').style.transform=`scaleX(${p})`;
-    sweep.style.opacity=reduced?'0':String(Math.sin(clamp((s-7.18)/.8)*Math.PI)*.1);
-    sweep.style.transform=`translateX(${(-60+clamp((s-7.18)/.8)*120)}%)`;
-    particles.forEach((node,i)=>{
-      node.style.opacity=String(color*(.12+.28*(.5+.5*Math.sin(s*.9+i))));
-      node.style.transform=`translate(${Math.sin(s*.4+i)*8}px,${-s*(2+i%3)}px)`;
-    });
+    elSyncFill.style.transform=`scaleX(${p})`;
+
+    if (s >= 7.18 && s <= 8.2) {
+      sweep.style.opacity=reduced?'0':String(Math.sin(clamp((s-7.18)/.8)*Math.PI)*.1);
+      sweep.style.transform=`translateX(${(-60+clamp((s-7.18)/.8)*120)}%)`;
+    } else if (sweep.style.opacity !== '0') {
+      sweep.style.opacity='0';
+    }
+
+    if (color > 0) {
+      for(let i=0;i<particles.length;i++){
+        const node=particles[i];
+        node.style.opacity=String(color*(.12+.28*(.5+.5*Math.sin(s*.9+i))));
+        node.style.transform=`translate(${Math.sin(s*.4+i)*8}px,${-s*(2+i%3)}px)`;
+      }
+    }
     subtitle.style.opacity=String(smooth((s-7.6)/.4)*(1-smooth((s-10.65)/.25)));
+
     if(Math.abs(t-lastUI)>60 || t===0 || t>=duration) {
       lastUI=t;
-      $('#ratio').textContent=`${(p*100).toFixed(2).padStart(5,'0')}%`;
-      $('.sync-phase').textContent=s<6.5?'INITIALIZING':p<1?'SYNCHRONIZING':'SYNC COMPLETE';
-      $('#timecode').textContent=`00:${String(Math.floor(s)).padStart(2,'0')}:${String(Math.floor(s%1*30)).padStart(2,'0')}`;
+      elRatio.textContent=`${(p*100).toFixed(2).padStart(5,'0')}%`;
+      elSyncPhase.textContent=s<6.5?'INITIALIZING':p<1?'SYNCHRONIZING':'SYNC COMPLETE';
+      elTimecode.textContent=`00:${String(Math.floor(s)).padStart(2,'0')}:${String(Math.floor(s%1*30)).padStart(2,'0')}`;
       slider.value=String(s);
-      $('#elapsed').innerHTML=`${s.toFixed(1).padStart(4,'0')} <span>/ 12.0s</span>`;
-      root.dataset.elapsed=s.toFixed(2);
-      root.dataset.stage=s>=11?'shutter':s<1.15?'pulse':s<4.18?'identity':s<4.74?'dispersing':s<5.08?'scattered':s<7.18?'drawing':s<7.43?'colorize':'portrait';
+      elElapsed.innerHTML=`${s.toFixed(1).padStart(4,'0')} <span>/ 12.0s</span>`;
+      const stage=s>=11?'shutter':s<1.15?'pulse':s<4.18?'identity':s<4.74?'dispersing':s<5.08?'scattered':s<7.18?'drawing':s<7.43?'colorize':'portrait';
+      if(stage!==lastStage){lastStage=stage;root.dataset.stage=stage;}
     }
   }
-  function updateButton() { pause.textContent=playing?'暂停':'继续'; root.dataset.playing=String(playing); }
+  function updateButton() { pause.textContent=playing?t('btnPause'):t('btnPlay'); root.dataset.playing=String(playing); }
   function stop() { playing=false; cancelAnimationFrame(frame); frame=0; updateButton(); }
   function finish(skipped=false) {
     stop(); elapsed=duration; render(elapsed); completed=true;
     root.classList.add('finished'); root.dataset.completed='true';
-    pause.textContent='已结束'; pause.disabled=true;
-    $('.end-description').textContent=mode==='launch'?'正在显示 Codex…':skipped?'已跳过开场动画':'开场预览结束';
+    pause.textContent=t('btnEnded'); pause.disabled=true;
+    $('.end-description').textContent=mode==='launch'?t('descLaunchingCodex'):skipped?t('descSkipped'):t('endDesc');
     send('complete');
   }
   function tick(now) {
     if(!playing)return;
+    const t0=performance.now();
     elapsed=Math.min(duration,now-origin); render(elapsed);
+    window.__aemeathRenderMs=performance.now()-t0;
+    window.__aemeathElapsed=elapsed;
     if(elapsed>=duration){finish();return;}
     frame=requestAnimationFrame(tick);
   }
@@ -308,11 +549,52 @@
   let savedImages={},pendingImages={},busy=false;
   const settings=$('#settings-dialog'),status=$('#settings-status');
   const textFields=[
-    {key:'introTitle',input:'#intro-title',target:'.boot-title',fallback:'飞行雪绒',limit:16},
-    {key:'introCaption',input:'#intro-caption',target:'.boot-caption',fallback:'CODEX INITIALIZE / TYPE-0',limit:48},
-    {key:'artworkSubtitle',input:'#artwork-subtitle',target:'#subtitle',fallback:'幽灵来到…你身边～',limit:60}
+    {key:'introTitle',input:'#intro-title',target:'.boot-title',fallbackKey:'defaultIntroTitle',limit:16},
+    {key:'introCaption',input:'#intro-caption',target:'.boot-caption',fallbackKey:'defaultIntroCaption',limit:48},
+    {key:'artworkSubtitle',input:'#artwork-subtitle',target:'#subtitle',fallbackKey:'defaultArtworkSubtitle',limit:60}
   ];
-  const textValue=(images,field)=>typeof images[field.key]==='string'?images[field.key].slice(0,field.limit):field.fallback;
+  const textValue=(images,field)=>{
+    if(typeof images[field.key]==='string'&&images[field.key].length>0)return images[field.key].slice(0,field.limit);
+    return t(field.fallbackKey);
+  };
+  function setLanguage(lang,updateInputs=false){
+    if(!I18N[lang])return;
+    const oldLang=currentLang;
+    currentLang=lang;
+    pendingImages.lang=lang;
+    try{localStorage.setItem('aemeath-lang',lang);}catch{}
+    document.querySelectorAll('.lang-btn').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.lang===lang);
+    });
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key=el.dataset.i18n;
+      if(key&&I18N[lang][key]!==undefined)el.textContent=I18N[lang][key];
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+      const key=el.dataset.i18nAria;
+      if(key&&I18N[lang][key]!==undefined)el.setAttribute('aria-label',I18N[lang][key]);
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el=>{
+      const key=el.dataset.i18nTitle;
+      if(key&&I18N[lang][key]!==undefined)el.setAttribute('title',I18N[lang][key]);
+    });
+    if(updateInputs){
+      for(const field of textFields){
+        const input=$(field.input);
+        const oldFallback=I18N[oldLang]?.[field.fallbackKey];
+        if(!pendingImages[field.key]||input.value===oldFallback){
+          delete pendingImages[field.key];
+          input.value=t(field.fallbackKey);
+          $(field.target).textContent=t(field.fallbackKey);
+        }
+      }
+    }
+    if(pause)updateButton();
+    if(status)status.textContent=t('statusDefault');
+  }
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>setLanguage(btn.dataset.lang,true));
+  });
   function thumbnails(){
     $('#avatar-preview').src=pendingImages.avatar||assets.avatar;
     $('#artwork-preview').src=pendingImages.artwork||assets.artwork;
@@ -322,8 +604,10 @@
   }
   function openSettings(){
     if(mode==='launch'||settings.open)return;
-    hiddenPause=false;stop();pendingImages={...savedImages};thumbnails();
-    status.textContent='图片与文字保存在本机。修改后点击「保存并预览」；关闭则放弃本次修改。';
+    hiddenPause=false;stop();pendingImages={...savedImages};
+    if(savedImages.lang)setLanguage(savedImages.lang,false);
+    thumbnails();
+    status.textContent=t('statusDefault');
     settings.returnValue='';settings.showModal();send('settings-open');
   }
   function setBusy(value){
@@ -331,10 +615,18 @@
     settings.querySelectorAll('input,button').forEach(node=>node.disabled=value);
   }
   async function applyImages(images){
+    if(images.lang&&I18N[images.lang])setLanguage(images.lang,false);
     releaseIdentityTexture();
     art.src=images.artwork||assets.artwork;$('.avatar').src=images.avatar||assets.avatar;
     await Promise.all([art,$('.avatar')].map(img=>img.decode()));
-    paths=preparePaths(images.contours||window.CONTOUR_PATHS||[]);fragments=prepareFragments(paths);lastTrace=-1;
+    let contourData=images.contours;
+    if(!contourData||!contourData.length){
+      if(window.imageSettings?.extractContours){
+        try{contourData=window.imageSettings.extractContours(art);}catch(e){}
+      }
+    }
+    if(!contourData||!contourData.length){contourData=window.CONTOUR_PATHS||[];}
+    paths=preparePaths(contourData);fragments=prepareFragments(paths);lastTrace=-1;
     if(!paths.length)throw new Error('图片轮廓数据缺失');
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
     $('.boot-title').classList.toggle('long-title',Array.from(textValue(images,textFields[0])).length>6);
@@ -357,25 +649,36 @@
   });
   for(const kind of ['avatar','artwork'])$('#'+kind+'-file').addEventListener('change',async event=>{
     const file=event.target.files[0];if(!file)return;
-    setBusy(true);status.textContent=kind==='artwork'?'正在为新背景生成线稿…':'正在准备头像…';
+    setBusy(true);status.textContent=kind==='artwork'?t('statusGeneratingContours'):t('statusPreparingAvatar');
     // Let the progress text paint before the one-time contour computation.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     try{
       pendingImages={...pendingImages,...await window.imageSettings.importImage(file,kind)};thumbnails();
-      status.textContent='图片已准备好，点击「保存并预览」应用。';
+      status.textContent=t('statusImageReady');
     }catch(error){status.textContent=error.message;}
     finally{setBusy(false);event.target.value='';}
   });
-  $('#reset-images').addEventListener('click',()=>{pendingImages={};thumbnails();status.textContent='已选用默认图片、文字和背景显现程度，点击「保存并预览」应用。';});
+  $('#reset-images').addEventListener('click',()=>{
+    const keepLang=pendingImages.lang||currentLang;
+    pendingImages={lang:keepLang};
+    thumbnails();
+    status.textContent=t('statusResetDone');
+  });
   $('#preview-images').addEventListener('click',async()=>{
-    setBusy(true);status.textContent='正在保存…';
+    setBusy(true);status.textContent=t('statusSaving');
     try{
+      pendingImages.lang=currentLang;
       await applyImages(pendingImages);await window.imageSettings.save(pendingImages);savedImages={...pendingImages};settings.close('preview');
-    }catch(error){await applyImages(savedImages);status.textContent='保存失败，原设置已保留：'+error.message;}
+    }catch(error){await applyImages(savedImages);status.textContent=t('statusSaveFailed')+error.message;}
     finally{setBusy(false);}
   });
   window.imageSettings.load().catch(()=>({})).then(async images=>{
     savedImages=images;
+    const initialLang=images.lang||(function(){
+      try{const s=localStorage.getItem('aemeath-lang');if(s&&I18N[s])return s;}catch{}
+      return 'vi';
+    })()||'vi';
+    setLanguage(initialLang,false);
     try{await applyImages(images);}catch{savedImages={};await applyImages({});}
     ready();
   }).catch(failed);
