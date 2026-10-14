@@ -42,9 +42,20 @@ namespace CodexStartup {
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
 
+        [DllImport("user32.dll")]
+        public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
         public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
         public const uint WM_CLOSE = 0x0010;
         public const int SW_RESTORE = 9;
+
+        public static void BringWindowToFront(IntPtr hWnd) {
+            if (hWnd == IntPtr.Zero) return;
+            ShowWindow(hWnd, SW_RESTORE);
+            keybd_event(0x12, 0, 0, 0); // VK_MENU (Alt) down
+            SetForegroundWindow(hWnd);
+            keybd_event(0x12, 0, 2, 0); // VK_MENU (Alt) up
+        }
     }
 
     public class RunningAppInfo {
@@ -94,6 +105,8 @@ namespace CodexStartup {
                 string icoPath = Path.Combine(projectDir, "assets\\codex-pink.ico");
                 if (File.Exists(icoPath)) {
                     this.Icon = new Icon(icoPath);
+                } else if (File.Exists(Application.ExecutablePath)) {
+                    this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
                 }
             } catch {}
 
@@ -226,8 +239,7 @@ namespace CodexStartup {
             }
 
             if (appInfo.HasVisibleWindow && appInfo.MainWindowHandle != IntPtr.Zero) {
-                NativeMethods.ShowWindow(appInfo.MainWindowHandle, NativeMethods.SW_RESTORE);
-                NativeMethods.SetForegroundWindow(appInfo.MainWindowHandle);
+                NativeMethods.BringWindowToFront(appInfo.MainWindowHandle);
                 this.DialogResult = DialogResult.Ignore; // Đã kích hoạt xong, thoát launcher
                 this.Close();
             } else {
@@ -369,6 +381,24 @@ namespace CodexStartup {
                     string loc = p.StandardOutput.ReadToEnd().Trim();
                     p.WaitForExit(5000);
                     if (!string.IsNullOrEmpty(loc) && Directory.Exists(loc)) {
+                        string appDir = Directory.Exists(Path.Combine(loc, "app")) ? Path.Combine(loc, "app") : loc;
+                        string localPrograms = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs\\Codex");
+                        try {
+                            if (!Directory.Exists(localPrograms)) {
+                                ProcessStartInfo psiLink = new ProcessStartInfo {
+                                    FileName = "cmd.exe",
+                                    Arguments = "/c mklink /J \"" + localPrograms + "\" \"" + appDir + "\"",
+                                    CreateNoWindow = true,
+                                    UseShellExecute = false
+                                };
+                                using (Process pLink = Process.Start(psiLink)) {
+                                    pLink.WaitForExit(1000);
+                                }
+                            }
+                            string candidate = Path.Combine(localPrograms, "ChatGPT.exe");
+                            if (File.Exists(candidate)) return Path.GetFullPath(candidate);
+                        } catch {}
+
                         string[] subpaths = new string[] {
                             "app\\ChatGPT.exe", "app\\Codex.exe", "ChatGPT.exe", "Codex.exe"
                         };
@@ -443,8 +473,8 @@ namespace CodexStartup {
                 }
 
                 // Kiểm tra xem có đúng đường dẫn ứng dụng chính thức hay không
-                bool isTargetAppx = targetPath.Contains("openai.codex");
-                bool isProcAppx = procPath.ToLowerInvariant().Contains("openai.codex");
+                bool isTargetAppx = targetPath.Contains("openai.codex") || targetPath.Contains("programs\\codex");
+                bool isProcAppx = procPath.ToLowerInvariant().Contains("openai.codex") || procPath.ToLowerInvariant().Contains("programs\\codex");
 
                 bool isMatch = string.Equals(procPath, targetPath, StringComparison.OrdinalIgnoreCase);
                 if (!isMatch && isTargetAppx && isProcAppx) {
@@ -511,37 +541,43 @@ namespace CodexStartup {
         }
 
         public static void KillRunningApp(RunningAppInfo info) {
-            if (info != null && info.ProcessIds != null) {
-                foreach (int pid in info.ProcessIds) {
-                    try {
-                        ProcessStartInfo psi = new ProcessStartInfo {
-                            FileName = "taskkill",
-                            Arguments = "/F /PID " + pid + " /T",
-                            CreateNoWindow = true,
-                            UseShellExecute = false
-                        };
-                        using (Process p = Process.Start(psi)) {
-                            p.WaitForExit(1500);
-                        }
-                    } catch {}
-                    try {
-                        Process p = Process.GetProcessById(pid);
-                        if (!p.HasExited) p.Kill();
-                    } catch {}
-                }
+            if (info == null || info.ProcessIds == null || info.ProcessIds.Count == 0) return;
+
+            // 1. Gửi yêu cầu đóng lịch sự tới cửa sổ chính nếu có
+            if (info.MainWindowHandle != IntPtr.Zero) {
+                try {
+                    NativeMethods.PostMessage(info.MainWindowHandle, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                } catch {}
             }
 
-            try {
-                ProcessStartInfo psiKill = new ProcessStartInfo {
-                    FileName = "taskkill",
-                    Arguments = "/F /IM \"ChatGPT.exe\" /T",
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                };
-                using (Process pKill = Process.Start(psiKill)) {
-                    pKill.WaitForExit(2000);
-                }
-            } catch {}
+            // 2. Yêu cầu các tiến trình mục tiêu đóng an toàn (đóng bình thường)
+            List<Process> targetProcs = new List<Process>();
+            foreach (int pid in info.ProcessIds) {
+                try {
+                    Process p = Process.GetProcessById(pid);
+                    if (!p.HasExited) {
+                        p.CloseMainWindow();
+                        targetProcs.Add(p);
+                    }
+                } catch {}
+            }
+
+            // 3. Chờ tối đa 2500ms để tiến trình tự giải phóng tài nguyên
+            DateTime deadline = DateTime.Now.AddMilliseconds(2500);
+            while (DateTime.Now < deadline && targetProcs.Count > 0) {
+                targetProcs.RemoveAll(p => {
+                    try { return p.HasExited; } catch { return true; }
+                });
+                if (targetProcs.Count > 0) Thread.Sleep(100);
+            }
+
+            // 4. Nếu người dùng chọn "Đóng và khởi động lại" mà tiến trình bị treo sau timeout,
+            // mới dừng riêng tiến trình đó (chỉ trên đúng các PID đã xác định)
+            foreach (Process p in targetProcs) {
+                try {
+                    if (!p.HasExited) p.Kill();
+                } catch {}
+            }
         }
 
         private static string FindNodeExecutable() {

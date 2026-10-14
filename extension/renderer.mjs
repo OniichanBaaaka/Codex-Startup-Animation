@@ -8,6 +8,16 @@ export function installRenderer(payload, mount) {
   const before=new Map(['--aemeath-wallpaper','--aemeath-wash'].map(key=>[key,[root.style.getPropertyValue(key),root.style.getPropertyPriority(key)]]));
   const originalAttribute=root.getAttribute('data-aemeath-skin');
   const style=document.createElement('style');style.id='aemeath-extension-style';style.textContent=payload.skin;
+  function applyIcon(){
+    if(!payload.assets?.icon)return;
+    let link=document.querySelector('link[rel*="icon"]');
+    if(!link){
+      link=document.createElement('link');link.rel='icon';link.type='image/png';
+      (document.head||document.documentElement).appendChild(link);
+    }
+    link.href=payload.assets.icon;
+  }
+  applyIcon();
   function removeOverlay(){
     clearTimeout(watchdog);observer?.disconnect();observer=null;
     frame?.remove();frame=null;
@@ -78,7 +88,7 @@ export function installRenderer(payload, mount) {
   }
   window.addEventListener('message',message);window.addEventListener('keydown',keyboard,true);
   window.__aemeathExtension={dispose,openSettings:()=>show(true),status:()=>({ready,completed,phase,overlay:!!frame,wallpaper:root.hasAttribute('data-aemeath-skin'),imageBytes:root.style.getPropertyValue('--aemeath-wallpaper').length})};
-  if(document.body)show();
-  else{observer=new MutationObserver(()=>{if(document.body){observer.disconnect();observer=null;show();}});observer.observe(document,{childList:true,subtree:true});}
+  if(document.body){applyIcon();show();}
+  else{observer=new MutationObserver(()=>{if(document.body){observer.disconnect();observer=null;applyIcon();show();}});observer.observe(document,{childList:true,subtree:true});}
   return {installed:true};
 }
