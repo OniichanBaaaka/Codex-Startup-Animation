@@ -233,10 +233,27 @@
       if(points.length<2)return;
       const first=points[0],last=points[points.length-1],x=(first[0]+last[0])/2,y=(first[1]+last[1])/2;
       const seed=result.length+1;
-      result.push({x,y,points:points.map(point=>[point[0]-x,point[1]-y]),
+      const angle=(noise(seed+563)-.5)*Math.PI*2;
+      const seedVal=noise(seed+811)*Math.PI*2;
+      const cosAngle=Math.cos(angle), sinAngle=Math.sin(angle);
+      const cosSeed=Math.cos(seedVal), sinSeed=Math.sin(seedVal);
+      const baseSize=0.16;
+      const baseCs=cosAngle*baseSize, baseSn=sinAngle*baseSize;
+      const basePoints=[first, last].map(pt=>[
+        (pt[0]-x)*baseCs - (pt[1]-y)*baseSn,
+        (pt[0]-x)*baseSn + (pt[1]-y)*baseCs
+      ]);
+      result.push({
+        x, y,
+        points: points.map(pt=>[pt[0]-x,pt[1]-y]),
         rawPoints: points,
-        sx:(x+(noise(seed)-.5)*440+1536)%1536,sy:(y+(noise(seed+271)-.5)*300+1024)%1024,
-        angle:(noise(seed+563)-.5)*Math.PI*2,seed:noise(seed+811)*Math.PI*2});
+        basePoints,
+        sx: (x+(noise(seed)-.5)*440+1536)%1536,
+        sy: (y+(noise(seed+271)-.5)*300+1024)%1024,
+        angle, seed: seedVal,
+        cosAngle, sinAngle,
+        cosSeed, sinSeed
+      });
     }
     for(const path of paths){
       if(path.points.length<2)continue;
@@ -253,10 +270,22 @@
       }
       add(chunk);
     }
+    result.sort((a,b)=>a.x-b.x);
     return result;
   }
   let paths=preparePaths(window.CONTOUR_PATHS || []),fragments=prepareFragments(paths);
   let identityTexture=null,identityPieces=[];
+  const settledCanvas=document.createElement('canvas');
+  settledCanvas.width=1536;settledCanvas.height=1024;
+  const settledCtx=settledCanvas.getContext('2d');
+  settledCtx.strokeStyle='#c8c0cd';settledCtx.lineWidth=1.25;settledCtx.lineCap='round';settledCtx.lineJoin='round';
+  let lastSettledIndex=0,lastSettledP=-1;
+
+  function resetSettledContours(){
+    settledCtx.clearRect(0,0,1536,1024);
+    lastSettledIndex=0;
+    lastSettledP=-1;
+  }
   function releaseIdentityTexture(){
     if(identityTexture)identityTexture.width=identityTexture.height=0;
     identityTexture=null;identityPieces=[];
@@ -304,15 +333,21 @@
       const w=Math.min(tile,1536-x),h=Math.min(tile,1024-y);
       const distance=Math.hypot(x+w/2-cx,y+h/2-cy);
       const onRing=[.3775,.4425,.48].some(radius=>Math.abs(distance-radar.w*radius)<tile);
-      if(onRing||boxes.some(box=>overlaps(x,y,box)))identityPieces.push({x,y,w,h,target:fragments[(identityPieces.length*37)%fragments.length]});
+      if(onRing||boxes.some(box=>overlaps(x,y,box))){
+        const hw=w/2,hh=h/2;
+        identityPieces.push({
+          x,y,w,h,cx:x+hw,cy:y+hh,hw,hh,
+          target:fragments[(identityPieces.length*37)%fragments.length]
+        });
+      }
     }
     identityTexture=texture;
     canvas.dataset.identityPieces=String(identityPieces.length);
     fragments.forEach((fragment,i)=>{
       const tile=identityPieces[i%identityPieces.length];
-      fragment.ix=tile?tile.x+tile.w/2:cx;fragment.iy=tile?tile.y+tile.h/2:cy;
+      fragment.ix=tile?tile.cx:cx;fragment.iy=tile?tile.cy:cy;
     });
-    for(const tile of identityPieces){tile.target.ix=tile.x+tile.w/2;tile.target.iy=tile.y+tile.h/2;}
+    for(const tile of identityPieces){tile.target.ix=tile.cx;tile.target.iy=tile.cy;}
   }
   function drawIdentityPieces(spread){
     if(!identityTexture||spread>=1)return;
@@ -322,10 +357,10 @@
     for(let i=0;i<identityPieces.length;i++){
       const tile=identityPieces[i];
       const target=tile.target;
-      const x=(tile.x+tile.w/2)*(1-spread)+target.sx*spread,y=(tile.y+tile.h/2)*(1-spread)+target.sy*spread;
+      const x=tile.cx*(1-spread)+target.sx*spread,y=tile.cy*(1-spread)+target.sy*spread;
       const angle=target.angle*spread,cs=Math.cos(angle)*size,sn=Math.sin(angle)*size;
       ctx.setTransform(cs,sn,-sn,cs,x,y);
-      ctx.drawImage(identityTexture,tile.x,tile.y,tile.w,tile.h,-tile.w/2,-tile.h/2,tile.w,tile.h);
+      ctx.drawImage(identityTexture,tile.x,tile.y,tile.w,tile.h,-tile.hw,-tile.hh,tile.w,tile.h);
     }
     ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
   }
@@ -338,41 +373,98 @@
     if(p===1){
       ctx.globalAlpha=1;
       for(let i=0;i<paths.length;i++) ctx.stroke(paths[i].full);
-    }else{
-      drawIdentityPieces(spread);
-      if(spread>.04){
-        ctx.globalAlpha=.82*smooth((spread-.04)/.36);ctx.beginPath();
-        const front=p*1.5-.25;
-        const driftX = drift * .8, driftY = drift * .6;
-        for(let f=0;f<fragments.length;f++){
-          const fragment=fragments[f];
-          const rawRatio=(front-fragment.x/1536+.16)/.32;
-          if(rawRatio>=1){
-            // Settled fragment: draw directly from raw points without trigonometry
-            const pts=fragment.rawPoints||fragment.points;
-            for(let i=0;i<pts.length;i++){
-              if(i)ctx.lineTo(pts[i][0],pts[i][1]);else ctx.moveTo(pts[i][0],pts[i][1]);
-            }
-          }else{
-            const arrival=rawRatio<=0?0:smooth(rawRatio);
-            const loose=1-arrival;
-            const angle=fragment.angle*loose,cs=Math.cos(angle),sn=Math.sin(angle);
-            const sx=(fragment.ix??fragment.sx)*(1-spread)+fragment.sx*spread;
-            const sy=(fragment.iy??fragment.sy)*(1-spread)+fragment.sy*spread;
-            const x=sx*loose+fragment.x*arrival+Math.sin(driftX+fragment.seed)*7*loose*spread;
-            const y=sy*loose+fragment.y*arrival+Math.cos(driftY+fragment.seed)*7*loose*spread;
-            const size=.16+.84*arrival;
-            const pts=fragment.points;
-            for(let i=0;i<pts.length;i++){
-              const pt=pts[i];
-              const px=x+(pt[0]*cs-pt[1]*sn)*size,py=y+(pt[0]*sn+pt[1]*cs)*size;
-              if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);
-            }
-          }
+      return;
+    }
+    drawIdentityPieces(spread);
+    if(spread<=.04) return;
+
+    if(p < lastSettledP){
+      resetSettledContours();
+    }
+    lastSettledP = p;
+
+    const front = p * 1.5 - 0.25;
+    const settledThreshold = 1536 * (front - 0.16);
+    const activeThreshold = 1536 * (front + 0.16);
+
+    let settledEnd = 0;
+    while(settledEnd < fragments.length && fragments[settledEnd].x <= settledThreshold){
+      settledEnd++;
+    }
+
+    if(settledEnd > lastSettledIndex){
+      settledCtx.beginPath();
+      for(let i = lastSettledIndex; i < settledEnd; i++){
+        const pts = fragments[i].rawPoints;
+        for(let j = 0; j < pts.length; j++){
+          if(j) settledCtx.lineTo(pts[j][0], pts[j][1]);
+          else settledCtx.moveTo(pts[j][0], pts[j][1]);
         }
-        ctx.stroke();ctx.globalAlpha=1;
+      }
+      settledCtx.stroke();
+      lastSettledIndex = settledEnd;
+    }
+
+    const alpha = .82 * smooth((spread - .04) / .36);
+    ctx.globalAlpha = alpha;
+
+    if(lastSettledIndex > 0){
+      ctx.drawImage(settledCanvas, 0, 0);
+    }
+
+    let activeEnd = settledEnd;
+    while(activeEnd < fragments.length && fragments[activeEnd].x < activeThreshold){
+      activeEnd++;
+    }
+
+    const driftX = drift * .8, driftY = drift * .6;
+    const sinDriftX = Math.sin(driftX), cosDriftX = Math.cos(driftX);
+    const sinDriftY = Math.sin(driftY), cosDriftY = Math.cos(driftY);
+    const inv1536 = 1 / 1536, inv032 = 1 / 0.32;
+    const spreadW = 7 * spread;
+
+    ctx.beginPath();
+
+    // 1. Transitioning band
+    for(let f = settledEnd; f < activeEnd; f++){
+      const fragment = fragments[f];
+      const rawRatio = (front - fragment.x * inv1536 + 0.16) * inv032;
+      const arrival = smooth(rawRatio);
+      const loose = 1 - arrival;
+      const angle = fragment.angle * loose;
+      const cs = Math.cos(angle), sn = Math.sin(angle);
+      const sx = (fragment.ix ?? fragment.sx) * (1 - spread) + fragment.sx * spread;
+      const sy = (fragment.iy ?? fragment.sy) * (1 - spread) + fragment.sy * spread;
+      const sinNoise = sinDriftX * fragment.cosSeed + cosDriftX * fragment.sinSeed;
+      const cosNoise = cosDriftY * fragment.cosSeed - sinDriftY * fragment.sinSeed;
+      const x = sx * loose + fragment.x * arrival + sinNoise * (spreadW * loose);
+      const y = sy * loose + fragment.y * arrival + cosNoise * (spreadW * loose);
+      const size = 0.16 + 0.84 * arrival;
+      const pts = fragment.points;
+      for(let i = 0; i < pts.length; i++){
+        const pt = pts[i];
+        const px = x + (pt[0] * cs - pt[1] * sn) * size;
+        const py = y + (pt[0] * sn + pt[1] * cs) * size;
+        if(i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
       }
     }
+
+    // 2. Unstarted floating fragments
+    for(let f = activeEnd; f < fragments.length; f++){
+      const fragment = fragments[f];
+      const sx = (fragment.ix ?? fragment.sx) * (1 - spread) + fragment.sx * spread;
+      const sy = (fragment.iy ?? fragment.sy) * (1 - spread) + fragment.sy * spread;
+      const sinNoise = sinDriftX * fragment.cosSeed + cosDriftX * fragment.sinSeed;
+      const cosNoise = cosDriftY * fragment.cosSeed - sinDriftY * fragment.sinSeed;
+      const x = sx + sinNoise * spreadW;
+      const y = sy + cosNoise * spreadW;
+      const bp0 = fragment.basePoints[0], bp1 = fragment.basePoints[1];
+      ctx.moveTo(x + bp0[0], y + bp0[1]);
+      ctx.lineTo(x + bp1[0], y + bp1[1]);
+    }
+
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
   for(let i=0;i<60;i++){
     const tick=document.createElementNS('http://www.w3.org/2000/svg','line');
@@ -418,8 +510,8 @@
 
     if(closing&&!revealed){revealed=true;send('reveal');}
 
-    if (s < 4.8) {
-      intro.style.opacity=String(reduced?1-smooth((s-4.18)/.56):s<4.18?1:0);
+    if (s < 4.18) {
+      if (intro.style.opacity !== '1') intro.style.opacity = '1';
       elIdentity.style.opacity=String(smooth((s-1.05)/.65));
       elIdentity.style.transform=`translate(-50%,-43%) scale(${.94+.06*smooth((s-1.05)/.65)})`;
       const beat=reduced?0:Math.pow((1-Math.cos(Math.max(0,s-1.05)*Math.PI*2/1.08))/2,2);
@@ -506,21 +598,22 @@
     const restoreTime=elapsed;
     // Prepare the final avatar layout before starting the playback clock, never in tick().
     render(4179);prepareIdentityTexture();drawIdentityPieces(0);
-    ctx.clearRect(0,0,1536,1024);lastTrace=-1;render(restoreTime);
+    ctx.clearRect(0,0,1536,1024);lastTrace=-1;resetSettledContours();render(restoreTime);
   }
   function play() {
     if(!loaded)return;
     if(elapsed>=duration)elapsed=0;
     warmIdentityTexture();
+    if(elapsed<4180)resetSettledContours();
     completed=false; root.classList.remove('finished'); root.dataset.completed='false';
     pause.disabled=false; origin=performance.now()-elapsed; playing=true;updateButton();
     cancelAnimationFrame(frame);frame=requestAnimationFrame(tick);
   }
-  function replay(){revealed=false;hiddenPause=false;stop();elapsed=0;lastUI=-Infinity;render(0);play();}
+  function replay(){revealed=false;hiddenPause=false;stop();elapsed=0;lastUI=-Infinity;resetSettledContours();render(0);play();}
   $('#replay').addEventListener('click',replay);$('.replay-end').addEventListener('click',replay);
   pause.addEventListener('click',()=>{hiddenPause=false;if(playing){elapsed=Math.min(duration,performance.now()-origin);stop();render(elapsed);}else play();});
   $('.skip').addEventListener('click',()=>finish(true));
-  slider.addEventListener('input',()=>{hiddenPause=false;stop();elapsed=Number(slider.value)*1000;warmIdentityTexture();if(elapsed>=duration){finish();return;}lastUI=-Infinity;completed=false;root.classList.remove('finished');root.dataset.completed='false';pause.disabled=false;render(elapsed);});
+  slider.addEventListener('input',()=>{hiddenPause=false;stop();elapsed=Number(slider.value)*1000;warmIdentityTexture();resetSettledContours();if(elapsed>=duration){finish();return;}lastUI=-Infinity;completed=false;root.classList.remove('finished');root.dataset.completed='false';pause.disabled=false;render(elapsed);});
   window.addEventListener('keydown',event=>{
     if((event.metaKey||event.ctrlKey)&&event.altKey&&event.code==='KeyB'){
       event.preventDefault();if(!$('#settings-dialog').open)openSettings();return;
@@ -626,7 +719,7 @@
       }
     }
     if(!contourData||!contourData.length){contourData=window.CONTOUR_PATHS||[];}
-    paths=preparePaths(contourData);fragments=prepareFragments(paths);lastTrace=-1;
+    paths=preparePaths(contourData);fragments=prepareFragments(paths);lastTrace=-1;resetSettledContours();
     if(!paths.length)throw new Error('图片轮廓数据缺失');
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
     $('.boot-title').classList.toggle('long-title',Array.from(textValue(images,textFields[0])).length>6);

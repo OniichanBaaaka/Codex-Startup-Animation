@@ -7,9 +7,10 @@ import {buildInjection} from '../extension/payload.mjs';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
-test('Windows: Tìm thấy ứng dụng Codex/ChatGPT hoặc trả về null an toàn', async () => {
+test('Windows: Tìm thấy ứng dụng Codex/ChatGPT chính xác trên hệ thống', async () => {
   const exe = await findCodexExecutable();
-  if (exe) {
+  if (process.platform === 'win32') {
+    assert.ok(exe !== null, 'Phải tìm thấy đường dẫn ứng dụng ChatGPT/Codex trên Windows');
     assert.match(exe.toLowerCase(), /chatgpt\.exe|codex\.exe/);
   } else {
     assert.equal(exe, null);

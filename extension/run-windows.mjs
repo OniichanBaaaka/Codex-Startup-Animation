@@ -34,6 +34,20 @@ export async function findCodexExecutable(customPath) {
     ]);
     const loc = stdout.trim();
     if (loc) {
+      // Create user-level junction in %LOCALAPPDATA%\Programs\Codex
+      // so Windows 11 treats the running process as a standard Win32 app and correctly binds taskbar icons
+      const appDir = existsSync(join(loc, 'app')) ? join(loc, 'app') : loc;
+      const localDir = join(process.env.LOCALAPPDATA || '', 'Programs', 'Codex');
+      try {
+        if (!existsSync(localDir)) {
+          await exec('cmd', ['/c', 'mklink', '/J', localDir, appDir]);
+        }
+        for (const name of ['ChatGPT.exe', 'Codex.exe']) {
+          const cand = join(localDir, name);
+          if (existsSync(cand)) return cand;
+        }
+      } catch {}
+
       for (const name of ['app\\ChatGPT.exe', 'app\\Codex.exe', 'ChatGPT.exe', 'Codex.exe']) {
         const candidate = join(loc, name);
         try {
@@ -151,7 +165,10 @@ public class WinFocus {
     }
 }
 '@
-$procs = Get-Process -Name ChatGPT, Codex -ErrorAction SilentlyContinue
+$procs = Get-Process -Name ChatGPT, Codex -ErrorAction SilentlyContinue | Where-Object {
+    $p = $_.Path
+    $p -and (-not $p.StartsWith('${root.replace(/'/g, "''")}', [System.StringComparison]::OrdinalIgnoreCase))
+}
 if ($procs) {
     [WinFocus]::BringToFront($procs.Id)
 } else {
@@ -176,6 +193,25 @@ async function verifyAuthenticode(exePath) {
     if (status !== 'Valid') {
       console.warn(`[Cảnh báo] Trạng thái chữ ký Authenticode: ${status}`);
     }
+  } catch {}
+}
+
+export async function ensureShortcuts(exePath) {
+  try {
+    const icoPath = join(root, 'assets', 'codex-pink.ico');
+    const userStartMenu = join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs');
+    const psCmd = `
+      $wsh = New-Object -ComObject WScript.Shell
+      foreach ($name in @('ChatGPT.lnk', 'Codex.lnk')) {
+        $p = Join-Path '${userStartMenu.replace(/'/g, "''")}' $name
+        $lnk = $wsh.CreateShortcut($p)
+        $lnk.TargetPath = '${exePath.replace(/'/g, "''")}'
+        $lnk.WorkingDirectory = [System.IO.Path]::GetDirectoryName('${exePath.replace(/'/g, "''")}')
+        $lnk.IconLocation = '${icoPath.replace(/'/g, "''")},0'
+        $lnk.Save()
+      }
+    `;
+    await exec('powershell', ['-NoProfile', '-Command', psCmd]);
   } catch {}
 }
 
@@ -207,10 +243,20 @@ async function main() {
   // Kiểm tra nếu ứng dụng đang chạy khi gọi trực tiếp từ dòng lệnh
   const isForce = process.argv.includes('--force') || process.argv.includes('--restart');
   try {
-    const list = await command('tasklist', ['/FI', 'IMAGENAME eq ChatGPT.exe', '/NH']);
-    if (list && list.toLowerCase().includes('chatgpt.exe')) {
+    const scriptCheck = `(Get-Process -Name ChatGPT, Codex -ErrorAction SilentlyContinue | Where-Object {
+      $p = $_.Path
+      $p -and (-not $p.StartsWith('${root.replace(/'/g, "''")}', [System.StringComparison]::OrdinalIgnoreCase))
+    }).Count`;
+    const countRunning = Number(await command('powershell', ['-NoProfile', '-Command', scriptCheck])) || 0;
+    if (countRunning > 0) {
       if (!isForce) {
-        console.log('Thông báo: ChatGPT / Codex đang chạy. Vui lòng sử dụng launcher (Codex.exe) để chọn mở cửa sổ đang chạy hoặc đóng và khởi động lại an toàn.');
+        console.log('Thông báo: ChatGPT / Codex đang chạy. Đang kích hoạt đưa cửa sổ lên trước...');
+        const activated = await focusExistingWindow();
+        if (activated) {
+          console.log('Đã kích hoạt và đưa cửa sổ ChatGPT/Codex lên trước màn hình.');
+        } else {
+          console.log('Ứng dụng đang chạy ngầm trong khay hệ thống (System Tray). Vui lòng mở từ khay hệ thống hoặc dùng launcher Codex.exe.');
+        }
         return;
       }
     }
@@ -226,7 +272,9 @@ async function main() {
     }
   } catch {}
 
+
   await verifyAuthenticode(executable);
+  await ensureShortcuts(executable);
   const port = await freePort();
 
   // Đọc và chuẩn bị sẵn payload tiêm hoạt ảnh

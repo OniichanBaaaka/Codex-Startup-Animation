@@ -9,8 +9,12 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
 test('Kiểm tra mã nguồn không còn chứa taskkill cưỡng chế', () => {
   const runWindowsCode = readFileSync(join(root, 'extension', 'run-windows.mjs'), 'utf8');
-  assert.equal(runWindowsCode.includes('taskkill'), false, 'Không được chứa lệnh taskkill');
-  assert.equal(runWindowsCode.includes("'/F'") || runWindowsCode.includes('"/F"'), false, 'Không được chứa cờ cưỡng chế /F');
+  assert.equal(runWindowsCode.includes('taskkill'), false, 'extension/run-windows.mjs không được chứa lệnh taskkill');
+  assert.equal(runWindowsCode.includes("'/F'") || runWindowsCode.includes('"/F"'), false, 'extension/run-windows.mjs không được chứa cờ cưỡng chế /F');
+
+  const launcherCode = readFileSync(join(root, 'Native', 'Launcher.cs'), 'utf8');
+  assert.equal(launcherCode.includes('taskkill'), false, 'Native/Launcher.cs không được chứa lệnh taskkill');
+  assert.equal(launcherCode.includes('"taskkill"') || launcherCode.includes('taskkill /F'), false, 'Native/Launcher.cs không được chứa cờ cưỡng chế /F');
 });
 
 test('Trình biên dịch build-windows.ps1 và build-windows.bat kiểm tra mã thoát', () => {
